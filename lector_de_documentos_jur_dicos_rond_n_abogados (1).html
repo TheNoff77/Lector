@@ -1,0 +1,2028 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rondón Abogados — Lector Forense de Documentos y Redactor Jurídico</title>
+    <style>
+        :root {
+            --bg-app: #191c22;
+            --bg-header: #22262f;
+            --bg-sidebar: #20242c;
+            --bg-reader-outer: #6f7682;
+            --bg-reader-card: #888f9b;
+            --bg-modal: #252a34;
+            --text-main: #f3f5f8;
+            --text-muted: #aeb6c4;
+            --text-dim: rgba(243, 245, 248, 0.52);
+            --accent-yellow: #f4e7b4;
+            --accent-yellow-hover: #fbf1c8;
+            --accent-gold: #e6c665;
+            --border-subtle: rgba(255, 255, 255, 0.12);
+            --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --font-legal: "Bookman Old Style", "URW Bookman L", "Georgia", "Times New Roman", serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-app);
+            color: var(--text-main);
+            font-family: var(--font-ui);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ESTRUCTURA PRINCIPAL */
+        .app-shell {
+            display: flex;
+            flex-direction: column;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* BARRA SUPERIOR */
+        .topbar {
+            background-color: var(--bg-header);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-shrink: 0;
+            z-index: 30;
+        }
+
+        .brand-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .btn-icon {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+            padding: 8px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: background 0.18s, transform 0.1s;
+        }
+
+        .btn-icon:hover {
+            background: rgba(255, 255, 255, 0.16);
+        }
+
+        .btn-icon:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background: var(--accent-yellow);
+            color: #1f242d;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-yellow-hover);
+        }
+
+        .title-stack {
+            min-width: 0;
+        }
+
+        .title-stack h1 {
+            font-size: 14px;
+            font-weight: 700;
+            color: #ffffff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 460px;
+        }
+
+        .title-stack p {
+            font-size: 11px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* PESTAÑAS PRINCIPALES */
+        .mode-tabs {
+            display: flex;
+            background: rgba(0, 0, 0, 0.28);
+            padding: 4px;
+            border-radius: 12px;
+            border: 1px solid var(--border-subtle);
+            gap: 4px;
+        }
+
+        .mode-tab {
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            padding: 7px 14px;
+            border-radius: 9px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.18s;
+        }
+
+        .mode-tab.active {
+            background: var(--accent-yellow);
+            color: #1d222b;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        /* CONTENEDOR DE TRABAJO */
+        .workspace {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* BARRA LATERAL DE DOCUMENTOS */
+        .sidebar {
+            width: 320px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            transition: margin-left 0.25s ease;
+        }
+
+        .sidebar.collapsed {
+            margin-left: -320px;
+        }
+
+        .sidebar-section {
+            padding: 14px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .sidebar-heading {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--accent-yellow);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .doc-list {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            max-height: 295px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .doc-card {
+            width: 100%;
+            text-align: left;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 10px;
+            padding: 9px 11px;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.16s;
+        }
+
+        .doc-card:hover {
+            background: rgba(255, 255, 255, 0.09);
+        }
+
+        .doc-card.active {
+            background: rgba(244, 231, 180, 0.15);
+            border-color: var(--accent-yellow);
+        }
+
+        .doc-card-title {
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1.3;
+            margin-bottom: 3px;
+            color: #fff;
+        }
+
+        .doc-card-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        .font-controls {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 2px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .font-controls button {
+            background: transparent;
+            border: none;
+            color: #fff;
+            padding: 4px 9px;
+            cursor: pointer;
+            font-weight: 700;
+            border-radius: 6px;
+        }
+
+        .font-controls button:hover {
+            background: rgba(255,255,255,0.12);
+        }
+
+        .font-controls span {
+            padding: 0 8px;
+            font-size: 12px;
+            color: var(--accent-yellow);
+            font-weight: 700;
+        }
+
+        /* ÁREA DEL LECTOR "READ MY DOCUMENT" */
+        .reader-main {
+            flex: 1;
+            background: linear-gradient(180deg, #6e7582 0%, #5f6672 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .reader-viewport {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            padding: 18px 20px 8px 20px;
+        }
+
+        .reader-sheet {
+            width: 100%;
+            max-width: 880px;
+            background-color: rgba(141, 148, 159, 0.94);
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            border-radius: 18px;
+            box-shadow: 0 18px 42px rgba(0, 0, 0, 0.35);
+            overflow-y: auto;
+            padding: 32px 42px;
+            scroll-behavior: smooth;
+        }
+
+        .reader-sheet::-webkit-scrollbar,
+        .doc-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .reader-sheet::-webkit-scrollbar-thumb,
+        .doc-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.28);
+            border-radius: 8px;
+        }
+
+        /* PÁRRAFOS DEL DOCUMENTO EN EL LECTOR */
+        .paragraphs-container {
+            font-family: var(--font-legal);
+            font-size: 26px;
+            line-height: 1.48;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .r-para {
+            padding: 12px 16px;
+            border-radius: 12px;
+            border-left: 4px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: rgba(245, 247, 250, 0.56);
+        }
+
+        .r-para:hover {
+            background-color: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .r-para.active {
+            color: #ffffff;
+            background-color: rgba(244, 231, 180, 0.16);
+            border-left-color: var(--accent-yellow);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+        }
+
+        .r-para.heading-para {
+            font-weight: 700;
+            letter-spacing: 0.01em;
+        }
+
+        /* CONTROLES INFERIORES ESTILO "READ MY DOCUMENT" */
+        .player-footer {
+            width: 100%;
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 8px 24px 20px 24px;
+            flex-shrink: 0;
+        }
+
+        /* Barra segmentada interactiva */
+        .segments-track {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            height: 28px;
+            overflow-x: auto;
+            padding: 2px 0;
+            cursor: pointer;
+            scrollbar-width: none;
+        }
+
+        .segments-track::-webkit-scrollbar {
+            display: none;
+        }
+
+        .seg-pill {
+            flex-shrink: 0;
+            height: 13px;
+            border-radius: 4px;
+            background: rgba(235, 240, 248, 0.35);
+            transition: all 0.18s ease;
+        }
+
+        .seg-pill:hover {
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .seg-pill.past {
+            background: rgba(235, 240, 248, 0.68);
+        }
+
+        .seg-pill.current {
+            height: 24px;
+            background: var(--accent-yellow);
+            box-shadow: 0 0 10px rgba(244, 231, 180, 0.7);
+        }
+
+        .status-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            color: rgba(245, 247, 250, 0.9);
+            margin: 4px 2px 12px 2px;
+        }
+
+        .controls-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .pill-control-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            color: #ffffff;
+            padding: 11px 20px;
+            border-radius: 999px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 115px;
+            justify-content: center;
+            transition: background 0.18s, transform 0.1s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+        }
+
+        .pill-control-btn:hover {
+            background: rgba(255, 255, 255, 0.24);
+        }
+
+        .transport-cluster {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .circle-nav-btn {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.16s;
+        }
+
+        .circle-nav-btn:hover {
+            background: rgba(255, 255, 255, 0.24);
+            transform: scale(1.04);
+        }
+
+        .circle-play-btn {
+            width: 74px;
+            height: 74px;
+            border-radius: 50%;
+            background: var(--accent-yellow);
+            border: 3px solid rgba(255, 255, 255, 0.55);
+            color: #4a515c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 10px 26px rgba(0, 0, 0, 0.32);
+            transition: all 0.16s;
+        }
+
+        .circle-play-btn:hover {
+            background: var(--accent-yellow-hover);
+            transform: scale(1.05);
+        }
+
+        .circle-play-btn:active {
+            transform: scale(0.96);
+        }
+
+        /* PESTAÑA 2: VISTA DE HOJA OFICIAL WORD DEL DESPACHO (BOOKMAN OLD STYLE 12PT) */
+        .office-view {
+            flex: 1;
+            background: #2b303a;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .office-toolbar {
+            background: #232730;
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .office-paper-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 28px 16px 48px 16px;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Hoja tamaño Carta con márgenes 2.54cm y Bookman Old Style 12pt */
+        .word-page {
+            width: 100%;
+            max-width: 816px; /* 21.59 cm a 96dpi */
+            min-height: 1056px;
+            background: #ffffff;
+            color: #000000;
+            padding: 72px 90px; /* ~2.54cm */
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+            border-radius: 3px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-family: var(--font-legal);
+            font-size: 12pt;
+            line-height: 1.25;
+            text-align: justify;
+        }
+
+        .word-header-letterhead {
+            text-align: center;
+            color: #555555;
+            font-family: var(--font-legal);
+            margin-bottom: 28px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            user-select: none;
+        }
+
+        .word-header-letterhead .lawyer-name {
+            font-size: 13pt;
+            letter-spacing: 0.04em;
+            font-weight: normal;
+        }
+
+        .word-header-letterhead .lawyer-role {
+            font-size: 11.5pt;
+        }
+
+        .word-body-editable {
+            flex: 1;
+            outline: none;
+            white-space: pre-wrap;
+            font-family: var(--font-legal);
+            font-size: 12pt;
+            line-height: 1.25;
+            color: #000000;
+            text-align: justify;
+        }
+
+        .word-footer-letterhead {
+            margin-top: 36px;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+            text-align: center;
+            font-size: 10pt;
+            font-style: italic;
+            color: #444444;
+        }
+
+        .word-footer-letterhead a {
+            color: #2b579a;
+            text-decoration: underline;
+        }
+
+        /* MODALES */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.72);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            z-index: 100;
+        }
+
+        .modal-backdrop.open {
+            display: flex;
+        }
+
+        .modal-box {
+            background: var(--bg-modal);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 580px;
+            max-height: 86vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-header h3 {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .modal-body {
+            padding: 18px 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .voice-option {
+            width: 100%;
+            text-align: left;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 14px;
+            border-radius: 11px;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background 0.15s;
+        }
+
+        .voice-option:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .voice-option.selected {
+            background: rgba(244, 231, 180, 0.18);
+            border-color: var(--accent-yellow);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 99px;
+            font-size: 10px;
+            font-weight: 700;
+            background: rgba(244, 231, 180, 0.22);
+            color: var(--accent-yellow);
+            margin-left: 6px;
+        }
+
+        .input-field, .textarea-field {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.32);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 10px;
+            padding: 10px 12px;
+            color: #fff;
+            font-size: 14px;
+            font-family: var(--font-ui);
+        }
+
+        .textarea-field {
+            font-family: var(--font-legal);
+            line-height: 1.45;
+            resize: vertical;
+        }
+
+        /* NOTIFICACIÓN TOAST */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #232832;
+            border: 1px solid var(--accent-yellow);
+            color: #fff;
+            padding: 12px 18px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.45);
+            z-index: 200;
+            display: none;
+        }
+
+        .toast.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                left: 0;
+                z-index: 40;
+                box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+            }
+            .reader-sheet {
+                padding: 20px;
+            }
+            .paragraphs-container {
+                font-size: 21px;
+            }
+            .word-page {
+                padding: 32px 24px;
+            }
+            .title-stack h1 {
+                max-width: 180px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-shell">
+    <!-- BARRA SUPERIOR -->
+    <header class="topbar">
+        <div class="brand-group">
+            <button id="btnToggleSidebar" class="btn-icon" title="Mostrar / Ocultar Biblioteca de Escritos">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+                <span>Escritos (6)</span>
+            </button>
+            <div class="title-stack">
+                <h1 id="docHeaderTitle">IMPUGNACIÓN DE TUTELA - DELFINA TORRES MOLANO</h1>
+                <p>Despacho Dr. José Aquilino Rondón González • Tunja, Boyacá</p>
+            </div>
+        </div>
+
+        <!-- PESTAÑAS DE MODO -->
+        <div class="mode-tabs">
+            <button id="tabReaderBtn" class="mode-tab active">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                </svg>
+                Lector de Voz (Read My Document)
+            </button>
+            <button id="tabOfficeBtn" class="mode-tab">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+                Hoja Oficial Word (Bookman 12pt)
+            </button>
+        </div>
+
+        <!-- ACCIONES RÁPIDAS -->
+        <div class="top-actions">
+            <label for="fileUploadInput" class="btn-icon" title="Subir archivo Word (.docx) o Texto (.txt)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <span>Abrir .DOCX</span>
+            </label>
+            <input id="fileUploadInput" type="file" accept=".docx,.txt" style="display:none">
+
+            <button id="btnOpenPaste" class="btn-icon btn-primary">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                </svg>
+                <span>Pegar Texto</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div class="workspace">
+        <!-- PANEL IZQUIERDO: TUS 6 DOCUMENTOS SUBIDOS + AJUSTES -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-heading">
+                    <span>Documentos del Despacho</span>
+                    <span id="docCountLabel">6 archivos</span>
+                </div>
+                <div id="docListContainer" class="doc-list"></div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-heading">
+                    <span>Ajustes de Lectura y Voz</span>
+                </div>
+
+                <div class="setting-row">
+                    <span>Tamaño de letra en lector</span>
+                    <div class="font-controls">
+                        <button id="btnFontMinus" type="button">A-</button>
+                        <span id="fontSizeDisplay">26px</span>
+                        <button id="btnFontPlus" type="button">A+</button>
+                    </div>
+                </div>
+
+                <div class="setting-row">
+                    <span>Dicción Jurídica Colombiana</span>
+                    <button id="btnToggleDiction" class="btn-icon" style="padding:4px 10px; font-size:11px; color:var(--accent-yellow);">
+                        ACTIVA
+                    </button>
+                </div>
+
+                <div class="setting-row">
+                    <span>Prueba rápida de sonido</span>
+                    <button id="btnTestVoice" class="btn-icon" style="padding:4px 10px; font-size:11px;">
+                        Probar Voz
+                    </button>
+                </div>
+            </div>
+
+            <div class="sidebar-section" style="border-bottom:none; font-size:11.5px; color:var(--text-muted); line-height:1.5;">
+                <div class="sidebar-heading"><span>Datos Fijos del Despacho</span></div>
+                <p><strong style="color:#fff;">Dr. José Aquilino Rondón González</strong></p>
+                <p>C.C. No. 7.163.991 de Tunja</p>
+                <p>T.P. No. 145.131 del C. S. de la J.</p>
+                <p style="margin-top:4px;">Carrera 10 No. 21-15 Int. 11 Edificio Camol, Tunja</p>
+                <p>Cel: 3158859212 • rondonabogados58@gmail.com</p>
+            </div>
+        </aside>
+
+        <!-- VISTA 1: LECTOR "READ MY DOCUMENT" -->
+        <main id="readerView" class="reader-main">
+            <div class="reader-viewport">
+                <div id="readerSheet" class="reader-sheet">
+                    <div id="paragraphsContainer" class="paragraphs-container"></div>
+                </div>
+            </div>
+
+            <footer class="player-footer">
+                <!-- Barra de bloques por párrafo idéntica a la captura -->
+                <div id="segmentsTrack" class="segments-track" title="Haz clic en cualquier segmento para ir a ese párrafo"></div>
+
+                <div class="status-row">
+                    <span id="paraStatusText">Párrafo 1 de 24, quedan unos 4 min</span>
+                    <span id="engineStatusText">Motor de voz listo • Haz clic en Play o en cualquier párrafo</span>
+                </div>
+
+                <div class="controls-bar">
+                    <!-- Selector de Voz ("Pablo" / Voces del sistema) -->
+                    <button id="btnOpenVoices" class="pill-control-btn" title="Cambiar voz de lectura">
+                        <span id="currentVoiceBtnLabel">Pablo</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="18 15 12 9 6 15"></polyline>
+                        </svg>
+                    </button>
+
+                    <!-- Botones centrales Anterior / Play-Pausa / Siguiente -->
+                    <div class="transport-cluster">
+                        <button id="btnPrevPara" class="circle-nav-btn" title="Párrafo anterior (Flecha izquierda)">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+                            </svg>
+                        </button>
+
+                        <button id="btnPlayPause" class="circle-play-btn" title="Reproducir / Pausar lectura (Tecla Espacio)">
+                            <!-- Icono Play por defecto -->
+                            <svg id="iconPlay" width="32" height="32" viewBox="0 0 24 24" fill="currentColor" style="margin-left:3px;">
+                                <path d="M8 5v14l11-7z"/>
+                            </svg>
+                            <!-- Icono Pausa oculto -->
+                            <svg id="iconPause" width="32" height="32" viewBox="0 0 24 24" fill="currentColor" style="display:none;">
+                                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                            </svg>
+                        </button>
+
+                        <button id="btnNextPara" class="circle-nav-btn" title="Párrafo siguiente (Flecha derecha)">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Botón de velocidad ("1x", "1.25x", "1.5x", "2x") -->
+                    <button id="btnSpeedToggle" class="pill-control-btn" style="min-width:78px;" title="Cambiar velocidad de lectura">
+                        1x
+                    </button>
+                </div>
+            </footer>
+        </main>
+
+        <!-- VISTA 2: HOJA OFICIAL WORD DEL DESPACHO (BOOKMAN OLD STYLE 12PT CON MEMBRETE) -->
+        <section id="officeView" class="office-view">
+            <div class="office-toolbar">
+                <div style="font-size:12px; color:var(--text-muted);">
+                    <strong style="color:var(--accent-yellow);">Formato Oficial del Despacho:</strong>
+                    Bookman Old Style, 12 pt, color negro, justificado, interlineado 1,25, tamaño carta, márgenes 2,54 cm.
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button id="btnSyncToReader" class="btn-icon">
+                        <span>Enviar Cambios al Lector de Voz</span>
+                    </button>
+                    <button id="btnCopyFormatted" class="btn-icon btn-primary">
+                        <span>Copiar Escrito para Word</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="office-paper-scroll">
+                <div class="word-page">
+                    <!-- Membrete superior idéntico a la captura de Word del usuario -->
+                    <div class="word-header-letterhead">
+                        <div class="lawyer-name">JOSE AQUILINO RONDÓN GONZÁLEZ</div>
+                        <div class="lawyer-role">Abogado</div>
+                    </div>
+
+                    <!-- Cuerpo editable en Bookman Old Style 12pt -->
+                    <div id="wordEditableBody" class="word-body-editable" contenteditable="true" spellcheck="true"></div>
+
+                    <!-- Pie de página idéntico a la captura de Word del usuario -->
+                    <div class="word-footer-letterhead">
+                        Carrera 10 No. 21-15 Int. 11 edificio Camol Tunja. Cel. 3158859212. Correo electrónico:<br>
+                        <a href="mailto:rondonabogados58@gmail.com">rondonabogados58@gmail.com</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- MODAL DE SELECCIÓN DE VOCES -->
+<div id="voiceModal" class="modal-backdrop">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Seleccionar Voz de Lectura</h3>
+            <button id="btnCloseVoiceModal" class="btn-icon">Cerrar</button>
+        </div>
+        <div class="modal-body">
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:6px;">
+                Selecciona cualquiera de las voces instaladas en tu sistema (Windows / Microsoft Edge / Chrome) o las voces neurales en español:
+            </p>
+            <div id="voicesListContainer" style="display:flex; flex-direction:column; gap:8px;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL PARA PEGAR O CREAR NUEVO ESCRITO -->
+<div id="pasteModal" class="modal-backdrop">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Pegar o Redactar Nuevo Documento</h3>
+            <button id="btnClosePasteModal" class="btn-icon">Cerrar</button>
+        </div>
+        <div class="modal-body">
+            <label style="font-size:12px; font-weight:700; color:var(--accent-yellow);">Título o Referencia del Escrito</label>
+            <input id="inputNewDocTitle" class="input-field" type="text" placeholder="Ej. Recurso de Reposición - Caso ...">
+
+            <label style="font-size:12px; font-weight:700; color:var(--accent-yellow); margin-top:6px;">Texto del Memorial / Impugnación / Petición</label>
+            <textarea id="inputNewDocBody" class="textarea-field" rows="11" placeholder="Pega aquí el texto de tu documento de Word..."></textarea>
+
+            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;">
+                <button id="btnSavePastedDoc" class="btn-icon btn-primary">Cargar Documento y Leer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- NOTIFICACIÓN FLOTANTE -->
+<div id="toast" class="toast"></div>
+
+<script>
+    // =========================================================================
+    // 1. LOS 6 DOCUMENTOS REALES QUE EL USUARIO SUBIÓ AL DESPACHO
+    // =========================================================================
+    const INITIAL_DOCUMENTS = [
+        {
+            id: 'doc-mapfre-reconsideracion',
+            title: 'MEMORIAL DE RECONSIDERACIÓN Y DERECHO DE PETICIÓN ANTE MAPFRE SEGUROS',
+            subtitle: 'Caso Nubia Esperanza Martínez ($37.054.303) • Placa NNZ776 vs KWW981',
+            content: `MEMORIAL DE RECONSIDERACIÓN Y DERECHO DE PETICIÓN ANTE MAPFRE SEGUROS
+
+Tunja, 23 de octubre de 2026
+
+Señores MAPFRE SEGUROS GENERALES DE COLOMBIA S.A. Atn. CAROLINA SUÁREZ SASTRE – Analista de Indemnizaciones (SSCARO1@MAPFRE.COM.CO) Atn. JUAN CARLOS GAITÁN TRUJILLO – Responsable de Indemnizaciones RCE Daños Autos CISMAP Barranquilla – Vicepresidencia de Operaciones Bogotá D.C. / Barranquilla
+
+REFERENCIA: RECONSIDERACIÓN A OBJECIÓN DE SINIESTRO Y DERECHO DE PETICIÓN
+OFICIO OBJETADO: OB-12610289 del 15 de octubre de 2026
+PÓLIZA AUTOMÓVILES: 5024124028810
+SINIESTRO No.: 502411402601204 / 502411402601204-2-DAM
+VEHÍCULO ASEGURADO: Camioneta RAM V700 – Placa NNZ776 (Servicio Público)
+BIENES AFECTADOS (TERCERO): Automóvil Suzuki Swift Dzire Placa KWW981 y Bicicleta de Ruta
+CUANTÍA CONSOLIDADA DAÑO EMERGENTE: $37.054.303 M/Cte.
+RECLAMANTE (TERCERA DAMNIFICADA): NUBIA ESPERANZA MARTÍNEZ GONZÁLEZ (C.C. 40.049.865)
+
+Respetados señores:
+
+JOSÉ AQUILINO RONDÓN GONZÁLEZ, mayor de edad, domiciliado y residente en la ciudad de Tunja (Boyacá), abogado titulado y en ejercicio, identificado con la cédula de ciudadanía No. 7.163.991 de Tunja y portador de la Tarjeta Profesional No. 145.131 del Consejo Superior de la Judicatura, actuando en calidad de apoderado especial de la señora NUBIA ESPERANZA MARTÍNEZ GONZÁLEZ, identificada con la cédula de ciudadanía No. 40.049.865 expedida en Tunja (celular 3132402113 / 3138736270, residente en la Carrera 4H No. 4-43 de Tunja), quien comparece en su condición de TERCERA DAMNIFICADA y propietaria tanto del automóvil marca Suzuki Swift Dzire MT modelo 2022 de placas KWW981 (VIN MBHZF63S4PG206844, Licencia de Tránsito No. 10033903272) como de la bicicleta de ruta afectada en el accidente de tránsito ocurrido el 30 de agosto de 2026; por medio del presente escrito formulo SOLICITUD DE RECONSIDERACIÓN frente a la objeción comunicada mediante el oficio OB-12610289 del 15 de octubre de 2026, con base en las siguientes consideraciones de hecho y de derecho:
+
+I. CALIDAD EN LA QUE ACTÚA LA RECLAMANTE Y CONSOLIDACIÓN DE LA CUANTÍA DEL SINIESTRO ($37.054.303 M/CTE.)
+
+En la comunicación OB-12610289, Mapfre Seguros Generales de Colombia S.A. dirige la negativa de indemnización a mi representada invocando la Cláusula 15.2 del condicionado general de la póliza No. 5024124028810, relativa al deber del asegurado de informar por escrito a la compañía la contratación de otros seguros de igual naturaleza sobre el mismo vehículo dentro de los diez (10) días hábiles siguientes a su celebración.
+
+Resulta indispensable precisar que mi poderdante, la señora NUBIA ESPERANZA MARTÍNEZ GONZÁLEZ, no es tomadora, asegurada ni tenedora del vehículo causante del siniestro (camioneta RAM V700 de placas NNZ776, cuyo propietario inscrito en la Licencia de Tránsito No. 10031209878 es el BANCO DE OCCIDENTE S.A., NIT 890.300.279, y cuyo conductor para la fecha del accidente era el señor WILFRAM SAURITH SANTIAGO CALDERÓN, C.C. 1.000.455.362).
+
+Mi mandante acude ante su compañía en calidad de víctima y tercera beneficiaria legal, en ejercicio de la acción directa prevista en el artículo 1133 del Código de Comercio, reclamando bajo el amparo de Responsabilidad Civil Extracontractual (RCE) el resarcimiento integral de los daños materiales ocasionados en el siniestro del 30 de agosto de 2026, cuya cuantía por concepto de daño emergente asciende a la suma total de TREINTA Y SIETE MILLONES CINCUENTA Y CUATRO MIL TRESCIENTOS TRES PESOS M/CTE. ($37.054.303), discriminada y acreditada probatoriamente así:
+
+1. Daños materiales del automóvil Suzuki Swift Dzire MT Modelo 2022 de placas KWW981: Tasados en la suma de VEINTINUEVE MILLONES SETECIENTOS DOCE MIL OCHOCIENTOS TRES PESOS M/CTE. ($29.712.803), conforme a la Cotización Ref. 1268731 expedida el 04 de septiembre de 2026 por el concesionario autorizado COMERCIALIZADORA ALCALÁ MOTOR (NIT 900.426.895) de la ciudad de Tunja, la cual comprende $5.800.000 por concepto de mano de obra de lámina, pintura y mecánica, $19.168.742 por concepto de repuestos originales genuinos más $4.744.061 correspondientes al IVA del 19%.
+
+2. Daños materiales de la bicicleta de ruta afectada: Tasados en la suma de SIETE MILLONES TRESCIENTOS CUARENTA Y UN MIL QUINIENTOS PESOS M/CTE. ($7.341.500), conforme a la Cotización No. 5624 del 02 de septiembre de 2026 expedida por el establecimiento THE BIKE PLANET.
+
+II. IMPROCEDENCIA DE LA OBJECIÓN POR COEXISTENCIA DE SEGUROS FRENTE AL AMPARO DE RESPONSABILIDAD CIVIL EXTRACONTRACTUAL
+
+La objeción planteada por Mapfre no se ajusta a los presupuestos del Código de Comercio ni a la propia redacción de la Cláusula 15.2 invocada, por tres razones jurídicas concretas:
+
+1. Operancia expresa de la excepción prevista en la Cláusula 15.2 y en el artículo 1093 del Código de Comercio: El texto de la Cláusula 15.2 transcrito por su compañía en la carta de objeción establece de manera literal: "La inobservancia de esta obligación producirá la terminación del presente contrato, a menos que el valor conjunto de los seguros no exceda el valor real del interés Asegurado."
+
+De acuerdo con el artículo 1127 del Código de Comercio, en el seguro de Responsabilidad Civil el interés asegurable no recae sobre el valor comercial de un cuerpo cierto, sino sobre la indemnidad del patrimonio del asegurado frente a las obligaciones indemnizatorias que surjan a favor de terceros damnificados. En consecuencia, respecto del amparo de Responsabilidad Civil Extracontractual opera de pleno derecho la salvedad contenida en la parte final de la Cláusula 15.2 y del artículo 1093 del estatuto mercantil, lo que impide tener por terminado el contrato de seguro.
+
+2. Falta de identidad de naturaleza, interés y riesgo entre la póliza del leasing financiero y el amparo de RCE (Art. 1092 C. de Co.): Para que exista coexistencia o pluralidad de seguros en los términos de los artículos 1092 y 1093 del Código de Comercio, es requisito indispensable que los contratos sean de igual naturaleza y cubran el mismo interés y el mismo riesgo.
+
+3. Ausencia de mala fe y deber legal de concurrencia proporcional (Art. 1092 C. de Co.): Aun en el supuesto eventual de que ambas pólizas incluyeran el amparo de Responsabilidad Civil Extracontractual sobre el mismo riesgo, nuestro ordenamiento mercantil solo sanciona con la pérdida del derecho aquellos eventos en que se demuestre mala fe o intento de fraude del tomador.
+
+III. ACREDITACIÓN EXPRESA DE NO RECLAMACIÓN ANTE OTRA COMPAÑÍA ASEGURADORA
+
+Adjunto al presente memorial la declaración rendida bajo la gravedad de juramento por mi representada, NUBIA ESPERANZA MARTÍNEZ GONZÁLEZ, en la cual deja constancia expresa de que no ha presentado reclamación directa ni indirecta ante el Banco de Occidente S.A. ni ante ninguna otra compañía de seguros por los daños derivados del accidente ocurrido el 30 de agosto de 2026.
+
+IV. SOLICITUDES Y DERECHO DE PETICIÓN
+
+PRIMERO (Solicitud Principal): REVOCAR la objeción comunicada mediante el oficio OB-12610289 del 15 de octubre de 2026 y, en consecuencia, APROBAR Y ORDENAR EL PAGO DE LA INDEMNIZACIÓN POR VALOR DE TREINTA Y SIETE MILLONES CINCUENTA Y CUATRO MIL TRESCIENTOS TRES PESOS M/CTE. ($37.054.303) a favor de mi poderdante, NUBIA ESPERANZA MARTÍNEZ GONZÁLEZ.
+
+SEGUNDO (Derecho de Petición Subsidiario – Art. 23 C.P., Ley 1755 de 2015 y Ley 1328 de 2009): En ejercicio del derecho fundamental de petición y del régimen de protección al consumidor financiero, en el evento en que Mapfre decida mantener total o parcialmente su negativa, solicito que dentro del término legal se nos expida e informe por escrito el nombre exacto de la otra compañía aseguradora, copia íntegra de la carátula de la póliza de automóviles No. 5024124028810 y certificación formal de no pago.
+
+Atentamente,
+
+JOSÉ AQUILINO RONDÓN GONZÁLEZ
+C.C. No. 7.163.991 de Tunja
+T.P. No. 145.131 del Consejo Superior de la Judicatura`
+        },
+        {
+            id: 'doc-impugnacion-tutela',
+            title: 'IMPUGNACIÓN DE TUTELA - DELFINA TORRES MOLANO',
+            subtitle: 'Rad. 150013153003-2026-00184-00 • Juzgado 3 Civil del Circuito de Tunja',
+            content: `Señor
+JUEZ TERCERO CIVIL DEL CIRCUITO DE ORALIDAD DE TUNJA
+E. S. D.
+
+Referencia: Acción de tutela - primera instancia
+Accionante: Delfina Torres Molano
+Accionado: Juzgado Tercero Civil Municipal De Oralidad De Tunja
+Radicado: 150013153003-2026-00184-00
+Asunto: IMPUGNACIÓN DEL FALLO DE TUTELA DEL 7 DE SEPTIEMBRE DE 2026.
+
+JOSÉ AQUILINO RONDÓN GONZÁLEZ, mayor de edad, identificado con cédula de ciudadanía No. 7.163.991 expedida en Tunja, abogado en ejercicio y portador de la Tarjeta Profesional No. 145.131 del Consejo Superior de la Judicatura, obrando como apoderado judicial de la señora DELFINA TORRES MOLANO, respetuosamente manifiesto que, de conformidad con los artículos 86 de la Constitución Política y 31 del Decreto 2591 de 1991, IMPUGNO el fallo proferido el 7 de septiembre de 2026, mediante el cual se declaró improcedente el amparo solicitado.
+
+Solicito que el superior funcional revoque la decisión y, en su lugar, conceda la protección de los derechos fundamentales al debido proceso y al acceso efectivo a la administración de justicia, por las razones que se exponen a continuación.
+
+I. OPORTUNIDAD DE LA IMPUGNACIÓN
+
+La sentencia fue remitida mediante mensaje de datos el martes 8 de septiembre de 2026, a las 3:50 p. m. Conforme al artículo 31 del Decreto 2591 de 1991, el fallo de primera instancia puede impugnarse dentro de los tres días siguientes a su notificación.
+
+Tratándose de una notificación personal surtida por correo electrónico, la Corte Constitucional, en la Sentencia SU-387 de 2022, precisó que la notificación se entiende realizada una vez transcurridos dos días hábiles siguientes al envío del mensaje y que el término comienza a correr al día siguiente. En este caso, los dos días hábiles posteriores al envío fueron el 9 y el 10 de septiembre; por ello, el término para impugnar transcurrió los días 11, 14 y 15 de septiembre de 2026. En consecuencia, este escrito se presenta oportunamente.
+
+II. SÍNTESIS DE LA DECISIÓN IMPUGNADA
+
+El fallo tuvo por satisfecho el requisito de inmediatez, pero declaró improcedente el amparo por falta de subsidiariedad. Consideró que, contra el auto del 19 de junio de 2026, por medio del cual se rechazó la demanda de oposición al deslinde, procedían los recursos de reposición y apelación y que, al no haber sido interpuestos, la acción de tutela no podía utilizarse para cuestionar una providencia ejecutoriada.
+
+Adicionalmente, aunque declaró improcedente la acción, el despacho efectuó un análisis denominado pedagógico y concluyó que la autoridad accionada actuó correctamente al exigir que en la subsanación se precisara la línea divisoria mediante coordenadas, mojones, puntos o un trazado específico.
+
+III. RAZONES DE INCONFORMIDAD
+
+1. El análisis de subsidiariedad fue meramente formal y no examinó la eficacia del medio ordinario frente a la vulneración constitucional alegada.
+La subsidiariedad no puede verificarse mediante la sola constatación abstracta de la existencia de un recurso. El juez constitucional debe analizar, a partir de las circunstancias concretas, si el medio era idóneo y eficaz para la protección del derecho fundamental, así como la entidad de la irregularidad denunciada y sus efectos actuales. Esa valoración era especialmente necesaria porque la actuación cuestionada cerró el trámite declarativo previsto por el artículo 404 del Código General del Proceso e impidió una decisión de fondo sobre la franja de terreno controvertida.
+
+No se pretende convertir la tutela en una instancia adicional ni reabrir una simple discrepancia legal. Se denunció una barrera judicial que, por exigir un requisito técnico no previsto expresamente como presupuesto de admisión, hizo imposible que la controversia sobre el lindero fuera sometida a debate probatorio y decidida mediante sentencia.
+
+2. El fallo no examinó adecuadamente el defecto procedimental por exceso ritual manifiesto.
+La Corte Constitucional ha reiterado que se configura exceso ritual manifiesto cuando las formas procesales se convierten en un obstáculo para la eficacia del derecho sustancial, se exigen requisitos de manera irreflexiva o se produce injustificadamente una decisión inhibitoria. Entre otras, las sentencias SU-041 de 2022, T-535 de 2023 y SU-204 de 2025 reiteran que el procedimiento es un instrumento para realizar los derechos y no un fin autónomo que permita cerrar el acceso a la jurisdicción.
+
+El artículo 404 del Código General del Proceso exige que quien se opuso al deslinde formalice su oposición mediante demanda en la que alegue los derechos que considere tener en la zona discutida. La norma no establece, como requisito autónomo de admisión, que la parte aporte desde ese momento coordenadas georreferenciadas, mojones técnicos o un trazado pericial definitivo.
+
+3. Se desconoció el contenido integral de la subsanación y de sus anexos.
+El fallo aceptó que la accionante corrigió la identificación de las partes, eliminó el dictamen pericial como pretensión, individualizó los derechos de dominio y posesión, relacionó las escrituras y aportó certificados de tradición. Sin embargo, concluyó que la demanda era indeterminada únicamente porque no incorporó coordenadas, mojones, puntos o un trazado específico.
+
+4. La exigencia impuesta no estaba expresamente prevista en la ley y anticipó indebidamente el debate probatorio.
+El deber de formular pretensiones claras y precisas no autoriza a exigir que, desde la admisión, el demandante demuestre de manera definitiva la localización técnica del lindero.
+
+5. La providencia impugnada contiene una contradicción relevante en su análisis de procedencia.
+En el numeral 6.1 de la motivación se afirmó expresamente que la acción fue presentada dentro de un plazo razonable y que cumplía el requisito de inmediatez. No obstante, tanto en el cierre del caso concreto como en la conclusión se indicó que no se cumplía ninguno de los requisitos generales de procedencia.
+
+6. La afectación de los derechos fundamentales es actual y constitucionalmente relevante.
+El rechazo impide que la accionante obtenga una decisión de fondo acerca de los derechos que afirma tener sobre la franja discutida y deja consolidada una línea divisoria que considera invasiva de su propiedad.
+
+IV. SOLICITUDES
+
+Con fundamento en lo expuesto, respetuosamente solicito al superior funcional:
+
+PRIMERA. REVOCAR el fallo del 7 de septiembre de 2026, mediante el cual el Juzgado Tercero Civil del Circuito de Oralidad de Tunja declaró improcedente la acción de tutela promovida por DELFINA TORRES MOLANO.
+
+SEGUNDA. En su lugar, AMPARAR los derechos fundamentales al debido proceso y al acceso efectivo a la administración de justicia de la accionante.
+
+TERCERA. DEJAR SIN EFECTOS el auto del 19 de junio de 2026, por medio del cual el Juzgado Tercero Civil Municipal de Oralidad de Tunja rechazó la demanda de oposición dentro del proceso de deslinde y amojonamiento radicado 2022-00043.
+
+CUARTA. ORDENAR a la autoridad judicial accionada que profiera una nueva decisión sobre la admisión de la demanda de oposición, valorando integralmente la demanda, la subsanación y sus anexos.
+
+QUINTA. Subsidiariamente, si el superior considera que debe complementarse el expediente, DECRETAR las pruebas o solicitar los informes que estime necesarios, conforme a las facultades previstas en el artículo 32 del Decreto 2591 de 1991.
+
+V. ANEXOS
+
+1. Pantallazo del mensaje de datos mediante el cual fue notificada la sentencia el 8 de septiembre de 2026.
+2. Los documentos y pruebas que ya obran en el expediente digital de la acción de tutela y en el proceso de deslinde y amojonamiento radicado 2022-00043.
+
+VI. NOTIFICACIONES
+
+El suscrito apoderado recibirá notificaciones en la carrera 10 No. 21-15, interior 11, edificio Camol, Tunja. Celular 315 885 9212. Correo electrónico: rondonabogados58@gmail.com.
+
+Atentamente,
+
+JOSÉ AQUILINO RONDÓN GONZÁLEZ
+C. C. No. 7.163.991 de Tunja
+T. P. No. 145.131 del Consejo Superior de la Judicatura`
+        },
+        {
+            id: 'doc-reposicion-toca',
+            title: 'RECURSO DE REPOSICIÓN EN SUBSIDIO APELACIÓN - RESOLUCIÓN 265 DE 2026',
+            subtitle: 'Municipio de Toca • Interviniente: María Imelda Saavedra De Acosta',
+            content: `Arquitecta
+MARTHA LILIANA RACHEN CELY
+Secretaria de Planeación y Obras Públicas
+Municipio de Toca - Boyacá
+E. S. D.
+
+Referencia: Trámite de licencia urbanística Rad. No. 0239-26
+Acto recurrido: Resolución No. 265 del 4 de septiembre de 2026
+Interviniente: María Imelda Saavedra De Acosta
+ASUNTO: Recurso de reposición y en subsidio apelación contra la Resolución 265 de 2026.
+
+JOSE AQUILINO RONDÓN GONZÁLEZ, mayor de edad, domiciliado en la ciudad de Tunja, identificado con cédula de ciudadanía No. 7.163.991 de Tunja, abogado en ejercicio, portador de la Tarjeta Profesional No. 145.131 del Consejo Superior de la Judicatura, obrando en calidad de apoderado judicial de la señora MARÍA IMELDA SAAVEDRA DE ACOSTA, identificada con cédula de ciudadanía No. 40.009.177, condición reconocida dentro de la actuación administrativa, respetuosamente interpongo RECURSO DE REPOSICIÓN y, en subsidio, RECURSO DE APELACIÓN contra la Resolución No. 265 del 4 de septiembre de 2026, mediante la cual se concedió licencia urbanística de construcción en modalidad de obra nueva, se desestimó la oposición formulada por mi representada y se adoptaron otras determinaciones.
+
+El recurso se presenta dentro del término previsto en los artículos 74, 76 y 77 de la Ley 1437 de 2011 y en el artículo noveno del acto recurrido, contado desde su notificación. Se solicita a la Secretaría revocar la decisión; de no acceder, conceder la apelación ante el señor alcalde Municipal de Toca y remitirle el expediente íntegro.
+
+DECISIÓN IMPUGNADA
+
+La Resolución No. 265 de 2026 concedió a la señora ROSAURA ACOSTA JIMÉNEZ licencia de construcción de obra nueva sobre el predio denominado “La Cebolla”, Vereda Tuaneca Abajo, identificado con matrícula inmobiliaria No. 070-100960 y número catastral 15814000000050428000, para una vivienda unifamiliar de un piso y 167,71 m². En el artículo cuarto desestimó la oposición presentada por esta parte y en el artículo noveno indicó que los recursos serían concedidos en efecto devolutivo.
+
+FUNDAMENTOS DE INCONFORMIDAD
+
+1. Interpretación errónea del requisito de titularidad de la licencia. El artículo 2.2.6.1.2.1.5 del Decreto 1077 de 2015, en su texto vigente, delimita quiénes pueden ser titulares de licencias urbanísticas. Para las licencias de construcción admite, además de quienes ostentan los derechos allí previstos, a los poseedores. La norma no establece como categoría autónoma habilitante la mera existencia de una “relación jurídica registrada”, ni permite que cualquier anotación en el folio sustituya la prueba de la calidad exigida.
+
+2. Falta de valoración integral de las pruebas sobre la posesión material. La oposición no se limitó a plantear un debate abstracto de propiedad. Aportó elementos que, según la misma resolución, documentan actuaciones policivas, órdenes de protección y verificaciones de cumplimiento relacionadas con la posesión material de mi representada.
+
+3. La inscripción de la demanda no resuelve la legitimación ni neutraliza el riesgo material. La construcción proyectada de 167,71 m² de obra nueva puede modificar de manera sustancial el estado físico del inmueble mientras el juez natural define la pertenencia.
+
+4. Motivación técnica insuficiente respecto del suelo rural y del proyecto concreto. Los artículos 3, 42 y 80 del CPACA exigen una decisión motivada que examine los argumentos y pruebas relevantes.
+
+5. Defectos en la publicidad y necesidad de verificar el expediente de notificación conforme a los artículos 68 y 69 del CPACA.
+
+6. Improcedencia del efecto devolutivo señalado en el artículo noveno. El artículo 79 de la Ley 1437 de 2011 establece que los recursos se tramitan en efecto suspensivo.
+
+PETICIONES
+
+PRIMERA. REPONER y, en consecuencia, REVOCAR la Resolución No. 265 del 4 de septiembre de 2026.
+
+SEGUNDA. NEGAR la licencia urbanística solicitada, al no encontrarse acreditada de manera suficiente y conforme al artículo 2.2.6.1.2.1.5 del Decreto 1077 de 2015 la calidad jurídica habilitante de la solicitante.
+
+TERCERA. Subsidiariamente, dejar sin efectos la decisión y retrotraer la actuación al momento necesario para completar la prueba de la legitimación.
+
+CUARTA. Decretar y practicar las pruebas solicitadas.
+
+QUINTA. Reconocer que el recurso se tramita en EFECTO SUSPENSIVO conforme al artículo 79 del CPACA.
+
+SEXTA. En caso de no acceder íntegramente a la reposición, CONCEDER el recurso de apelación ante el alcalde Municipal de Toca.
+
+Atentamente,
+
+JOSE AQUILINO RONDÓN GONZÁLEZ
+C.C. No. 7.163.991 de Tunja
+T. P. No. 145.131 del Consejo Superior de la Judicatura`
+        },
+        {
+            id: 'doc-comparendo-roosevelt',
+            title: 'IMPUGNACIÓN COMPARENDO N° 11001000000052767108 - ROOSEVELT SOTO',
+            subtitle: 'Secretaría Distrital de Movilidad de Bogotá D.C. • Infracción D12 (VIQ20G)',
+            content: `Bogotá D.C., 19 de octubre de 2026
+
+Señores
+SECRETARÍA DISTRITAL DE MOVILIDAD DE BOGOTÁ D.C.
+Subdirección de Contravenciones / Autoridad de Tránsito Competente
+E. S. D.
+
+Referencia: Impugnación de Orden de Comparendo N° 11001000000052767108, solicitud de fijación de audiencia pública para rendir descargos y solicitud de pruebas.
+Presunto Infractor: Roosevelt Soto
+
+ROOSEVELT SOTO, identificado con cédula de ciudadanía N° 1.082.805.133, actuando en nombre propio y en calidad de presunto infractor dentro del proceso contravencional de la referencia, en ejercicio del derecho fundamental al debido proceso (artículo 29 de la Constitución Política), del derecho de petición (artículo 23 constitucional y Ley 1755 de 2015) y dentro del término legal de los cinco (5) días hábiles siguientes a la imposición del comparendo establecido en el artículo 136 de la Ley 769 de 2002 (modificado por el artículo 24 de la Ley 1383 de 2010 y el artículo 205 del Decreto Ley 019 de 2012), manifiesto que IMPUGNO en su totalidad la Orden de Comparendo Nacional No. 11001000000052767108, con base en los siguientes:
+
+I. HECHOS
+
+1. El día 19 de octubre de 2026, a las 09:14:52 horas, en la dirección AC 80 CR 60 00 de Bogotá D.C., el agente de tránsito identificado con placa 88022 me impuso la Orden de Comparendo N° 11001000000052767108 al conducir el vehículo de placas VIQ20G.
+
+2. En dicha orden se codificó la presunta infracción D12 ("Conducir un vehículo que, sin la debida autorización, se destine a un servicio diferente de aquel para el cual tiene licencia de tránsito") y se procedió con la inmovilización del vehículo.
+
+3. En la casilla de observaciones del comparendo, el agente consignó textualmente: "realiza un transporte informal desde cota hasta Bogotá por una tarifa de 40 pesos según versión de la pasajera Srta. Sara Santo Domingo Martínez de cedula 1 017 153 345 de Medellin la que libre voluntariamente manifiesta venir desde cuotas Bogotá fue una suma aproximadamente 40 o 45,000".
+
+4. Rechazo los cargos formulados en la orden de comparendo, toda vez que la orden de comparendo es una simple citación para comparecer al proceso contravencional y no constituye por sí sola plena prueba de responsabilidad, recayendo la carga de la prueba en el Estado para desvirtuar mi presunción de inocencia.
+
+II. PETICIONES
+
+PRIMERA: Tenerme por presentado dentro del término legal de los cinco (5) días hábiles siguientes a la orden de comparendo N° 11001000000052767108 del 19 de octubre de 2026, rechazando la comisión de la infracción D12.
+
+SEGUNDA: Fijar fecha y hora para celebrar AUDIENCIA PÚBLICA DE IMPUGNACIÓN Y DESCARGOS, notificándome oportunamente el enlace o sala asignada a las direcciones de contacto suministradas al final de este escrito.
+
+TERCERA (Solicitud de Pruebas para la Audiencia): Conforme al artículo 136 del Código Nacional de Tránsito, solicito desde ya que en la audiencia se decreten y practiquen las siguientes pruebas:
+1. Versión libre y espontánea (descargos) del suscrito, Roosevelt Soto.
+2. Citación y declaración del agente de tránsito con placa 88022, para que bajo la gravedad de juramento sea interrogado sobre las circunstancias de tiempo, modo y lugar del procedimiento, y explique el sustento probatorio directo de sus observaciones.
+3. Citación y testimonio de la ciudadana Sara Santo Domingo Martínez, identificada con C.C. 1.017.153.345, mencionada en las observaciones del comparendo, con el fin de ejercer el derecho de contradicción sobre la supuesta manifestación verbal atribuida por el agente, la cual carece de firma de testigo en la tirilla del comparendo.
+4. Exhibición e incorporación de los eventuales registros fílmicos, de audio o anexos documentales que el agente 88022 haya aportado al expediente al momento de radicar el comparendo.
+
+III. ANEXOS
+
+1. Copia de mi cédula de ciudadanía.
+2. Copia de la tirilla de la Orden de Comparendo No. 11001000000052767108.
+3. Copia de la licencia de tránsito del vehículo de placas VIQ20G.
+
+Atentamente,
+
+ROOSEVELT SOTO
+C.C. N° 1.082.805.133`
+        },
+        {
+            id: 'doc-rnmc-chinavita',
+            title: 'SOLICITUD ACTUALIZACIÓN RNMC - PEDRO ANTONIO CARRILLO',
+            subtitle: 'Inspección de Policía de Chinavita (Boyacá) • Exp. 15-172-6-2026-33',
+            content: `Chinavita – Boyacá, octubre de 2026
+
+Señores
+SECRETARÍA GENERAL Y DE GOBIERNO CON FUNCIONES DE INSPECCIÓN DE POLICÍA
+Alcaldía Municipal de Chinavita – Boyacá
+Correo: contactenos@chinavita-boyaca.gov.co
+Dirección: Calle 4 No. 3-28 Palacio Municipal
+E. S. D.
+
+Asunto: Solicitud de constancia de actualización en el RNMC y archivo definitivo.
+Referencia: Expediente / Comparendo No. 15-172-6-2026-33 – Resolución No. 001 del 06 de octubre de 2026.
+Implicado: Pedro Antonio Carrillo Gonzales (C.C. 6.771.701 de Tunja).
+
+Respetado doctor Fran Esvar Urian Peña:
+
+JOSÉ AQUILINO RONDÓN GONZÁLEZ, actuando en nombre y representación del señor PEDRO ANTONIO CARRILLO GONZALES, identificado con la cédula de ciudadanía No. 6.771.701 expedida en Tunja, por medio del presente escrito solicito de manera respetuosa se sirva dar cumplimiento material a lo ordenado en los numerales CUARTO, QUINTO y SÉPTIMO de la parte resolutiva de la Resolución No. 001 del 06 de octubre de 2026, proferida por su Despacho.
+
+En consecuencia, solicito comedidamente:
+
+1. Se realice la respectiva actualización en el Registro Nacional de Medidas Correctivas (RNMC) de la Policía Nacional y en el aplicativo institucional correspondiente, dejando constancia expresa de la no imposición de la Multa General Tipo 3 asociada al artículo 27, numeral 3 de la Ley 1801 de 2016, así como de la decisión de abstenerse de continuar con la actuación policiva y el archivo definitivo del expediente No. 15-172-6-2026-33.
+
+2. Se nos expida y remita por este medio electrónico el comprobante, constancia o certificado de actualización en el sistema RNMC donde conste que el señor Pedro Antonio Carrillo Gonzales se encuentra libre de medidas correctivas pendientes por cuenta de dicha actuación.
+
+ANEXOS:
+Copia de la Resolución No. 001 del 06 de octubre de 2026 proferida por la Secretaría General y de Gobierno con Funciones de Inspección de Policía de Chinavita.
+
+NOTIFICACIONES:
+Recibiré notificaciones y respuesta a la presente solicitud en la Carrera 10 No. 21-15 Int. 11 edificio Camol Tunja, correo electrónico rondonabogados58@gmail.com y al teléfono 3158859212.
+
+Atentamente,
+
+JOSÉ AQUILINO RONDÓN GONZÁLEZ
+C.C. No. 7.163.991 de Tunja
+T.P. No. 145.131 del C. S. de la J.`
+        },
+        {
+            id: 'doc-banco-occidente-peticion',
+            title: 'DERECHO DE PETICIÓN BANCO DE OCCIDENTE Y REQUERIMIENTO SOLIDARIO',
+            subtitle: 'Caso Nubia Esperanza Martínez ($37.054.303) • Vehículo Placa NNZ776',
+            content: `Tunja, 23 de octubre de 2026
+
+Señores
+BANCO DE OCCIDENTE S.A.
+NIT: 890.300.279
+Atn. Departamento Jurídico / Operaciones de Leasing y Seguros
+Bogotá D.C. / Sucursal Tunja
+E. S. D.
+
+REFERENCIA: DERECHO DE PETICIÓN (Art. 23 C.P. y Ley 1755 de 2015) – SOLICITUD DE INFORMACIÓN SOBRE LOCATARIO, PÓLIZAS DE SEGUROS Y EMPRESA AFILIADORA DEL VEHÍCULO CAMIONETA RAM V700 PLACA NNZ776 (SINIESTRO DEL 30 DE AGOSTO DE 2026 – CUANTÍA DE DAÑOS: $37.054.303 M/CTE.)
+
+Respetados señores:
+
+JOSÉ AQUILINO RONDÓN GONZÁLEZ, mayor de edad, domiciliado y residente en la ciudad de Tunja (Boyacá), abogado titulado y en ejercicio, identificado con la C.C. No. 7.163.991 de Tunja y T.P. No. 145.131 del C.S. de la J., actuando en calidad de apoderado especial de la señora NUBIA ESPERANZA MARTÍNEZ GONZÁLEZ (C.C. 40.049.865 de Tunja), tercera damnificada y propietaria del automóvil Suzuki Swift Dzire modelo 2022 de placas KWW981 y de la bicicleta de ruta afectados en el accidente de tránsito ocurrido el pasado 30 de agosto de 2026; en ejercicio del derecho fundamental de petición consagrado en el artículo 23 de la Constitución Política y en la Ley 1755 de 2015, solicito a su entidad la información y certificaciones que se detallan más adelante, con base en los siguientes:
+
+I. HECHOS Y CUANTIFICACIÓN DEL PERJUICIO
+
+1. El día 30 de agosto de 2026 ocurrió un accidente de tránsito en el cual resultaron gravemente afectados el automóvil particular marca Suzuki Swift Dzire MT modelo 2022 de placas KWW981 y la bicicleta de ruta de propiedad de mi poderdante, al ser impactados por la camioneta marca RAM V700, modelo 2023, de servicio público, identificada con placas NNZ776, conducida en ese momento por el señor WILFRAM SAURITH SANTIAGO CALDERÓN (C.C. 1.000.455.362).
+
+2. De conformidad con la Licencia de Tránsito No. 10031209878, el propietario inscrito de la camioneta RAM V700 de placas NNZ776 es el BANCO DE OCCIDENTE S.A. (NIT 890.300.279).
+
+3. Los daños materiales (daño emergente) ocasionados a los bienes de mi representada ascienden a la suma consolidada de TREINTA Y SIETE MILLONES CINCUENTA Y CUATRO MIL TRESCIENTOS TRES PESOS M/CTE. ($37.054.303), soportados en $29.712.803 por reparación del automóvil Suzuki Swift placas KWW981 según Cotización Ref. 1268731 de Comercializadora Alcalá Motor y $7.341.500 por reparación de la bicicleta de ruta según Cotización No. 5624 de The Bike Planet.
+
+4. Presentada la reclamación directa ante MAPFRE SEGUROS GENERALES DE COLOMBIA S.A., dicha aseguradora objetó el pago mediante oficio OB-12610289 del 15 de octubre de 2026 alegando una supuesta coexistencia de seguros no informada por el tomador, afirmando que el vehículo NNZ776 registra otra póliza vigente donde figura como asegurado el BANCO DE OCCIDENTE S.A.
+
+II. PETICIONES
+
+Solicito respetuosamente al Banco de Occidente S.A. que, dentro del término legal, informe y certifique por escrito:
+
+1. INFORMACIÓN DE LA OTRA ASEGURADORA Y PÓLIZA VINCULADA AL BANCO: Certificar si sobre la camioneta RAM V700 de placas NNZ776 existía vigente para el 30 de agosto de 2026 alguna póliza de seguro donde figure como asegurado o beneficiario el BANCO DE OCCIDENTE S.A., especificando si cubre únicamente el casco del vehículo o si cuenta con amparo de Responsabilidad Civil Extracontractual frente a terceros damnificados.
+
+2. CONSTANCIA DE NO RECLAMACIÓN ANTE EL BANCO O SU ASEGURADORA: Expedir constancia en la que se indique que la señora NUBIA ESPERANZA MARTÍNEZ GONZÁLEZ (C.C. 40.049.865) no ha radicado reclamación ni recibido indemnización alguna por parte del Banco de Occidente S.A. con ocasión del siniestro del 30 de agosto de 2026.
+
+3. IDENTIFICACIÓN DEL LOCATARIO O TENEDOR FINANCIERO: Informar el nombre completo o razón social, número de cédula o NIT, dirección física, teléfono y correo electrónico del locatario o arrendatario financiero que ostentaba la guarda material del vehículo de placas NNZ776 para el 30 de agosto de 2026.
+
+4. EMPRESA DE TRANSPORTE PÚBLICO AFILIADORA: Informar el nombre y NIT de la empresa de servicio público a la cual se encuentra afiliada o vinculada la camioneta de placas NNZ776.
+
+Atentamente,
+
+JOSÉ AQUILINO RONDÓN GONZÁLEZ
+C.C. No. 7.163.991 de Tunja
+T.P. No. 145.131 del Consejo Superior de la Judicatura`
+        }
+    ];
+
+    // =========================================================================
+    // 2. ESTADO GLOBAL Y VARIABLES DE CONTROL ANTI-BLOQUEO
+    // =========================================================================
+    let docs = [...INITIAL_DOCUMENTS];
+    let activeDocId = docs[0].id;
+    let paragraphs = [];
+    let currentParaIdx = 0;
+    let isPlaying = false;
+    let dictionActive = true;
+    let speeds = [1, 1.15, 1.25, 1.5, 1.75, 2, 0.9];
+    let speedIdx = 0;
+    let readerFontSize = 26;
+
+    // Control de síntesis de voz del navegador con protección anti-congelamiento
+    let availableVoices = [];
+    let selectedVoiceURI = null;
+    let speechSessionId = 0;
+    let keepAliveInterval = null;
+
+    // =========================================================================
+    // 3. NORMALIZADOR DE ABREVIATURAS JURÍDICAS COLOMBIANAS
+    // =========================================================================
+    function expandLegalAbbreviations(text) {
+        if (!dictionActive) return text;
+        let t = text;
+        const rules = [
+            [/\bE\.\s*S\.\s*D\.?/gi, 'En su despacho.'],
+            [/\bC\.\s*C\.\s*(No\.|N°|Nro\.)?/gi, 'cédula de ciudadanía número '],
+            [/\bT\.\s*P\.\s*(No\.|N°|Nro\.)?/gi, 'Tarjeta Profesional número '],
+            [/\bC\.\s*S\.\s*de\s*la\s*J\.?/gi, 'Consejo Superior de la Judicatura'],
+            [/\bC\.\s*de\s*Co\.?/gi, 'Código de Comercio'],
+            [/\bC\.\s*G\.\s*P\.?/gi, 'Código General del Proceso'],
+            [/\bC\.\s*P\.?/g, 'Constitución Política'],
+            [/\bCPACA\b/g, 'Código de Procedimiento Administrativo y de lo Contencioso Administrativo'],
+            [/\bRCE\b/g, 'Responsabilidad Civil Extracontractual'],
+            [/\bRNMC\b/g, 'Registro Nacional de Medidas Correctivas'],
+            [/\bM\/Cte\.?/gi, 'moneda corriente'],
+            [/\bS\.\s*A\.\s*S\.?/gi, 'Sociedad por Acciones Simplificada'],
+            [/\bS\.\s*A\.?/g, 'Sociedad Anónima'],
+            [/\bArts\./gi, 'artículos'],
+            [/\bArt\./gi, 'artículo'],
+            [/\bRad\.\s*(No\.|N°)?/gi, 'Radicado número '],
+            [/\bRef\./gi, 'Referencia'],
+            [/\bAtn\./gi, 'Atención'],
+            [/\bSrta\./gi, 'Señorita'],
+            [/\b(No\.|N°|Nro\.)\s*(?=\d)/gi, 'número ']
+        ];
+        for (const [pattern, rep] of rules) {
+            t = t.replace(pattern, rep);
+        }
+        return t;
+    }
+
+    // =========================================================================
+    // 4. LECTOR NATIVO DE ARCHIVOS WORD (.DOCX) EN JAVASCRIPT PURO
+    //    No requiere librerías externas: descomprime el ZIP del .docx y lee word/document.xml
+    // =========================================================================
+    async function extractTextFromDocxBuffer(arrayBuffer) {
+        const view = new DataView(arrayBuffer);
+        const bytes = new Uint8Array(arrayBuffer);
+        let offset = 0;
+
+        while (offset + 30 < bytes.length) {
+            const sig = view.getUint32(offset, true);
+            if (sig !== 0x04034b50) {
+                offset++;
+                continue;
+            }
+            const compression = view.getUint16(offset + 8, true);
+            const compressedSize = view.getUint32(offset + 18, true);
+            const fileNameLen = view.getUint16(offset + 26, true);
+            const extraLen = view.getUint16(offset + 28, true);
+
+            const nameBytes = bytes.subarray(offset + 30, offset + 30 + fileNameLen);
+            const fileName = new TextDecoder('utf-8').decode(nameBytes);
+            const dataStart = offset + 30 + fileNameLen + extraLen;
+
+            if (fileName === 'word/document.xml') {
+                const compressedData = bytes.subarray(dataStart, dataStart + compressedSize);
+                let xmlText = '';
+
+                if (compression === 0) {
+                    xmlText = new TextDecoder('utf-8').decode(compressedData);
+                } else if (compression === 8 && typeof DecompressionStream !== 'undefined') {
+                    const ds = new DecompressionStream('deflate-raw');
+                    const writer = ds.writable.getWriter();
+                    writer.write(compressedData);
+                    writer.close();
+                    const decompressedBuffer = await new Response(ds.readable).arrayBuffer();
+                    xmlText = new TextDecoder('utf-8').decode(decompressedBuffer);
+                }
+
+                if (xmlText) {
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(xmlText, 'application/xml');
+                    const pNodes = xmlDoc.getElementsByTagName('w:p');
+                    const lines = [];
+                    for (let i = 0; i < pNodes.length; i++) {
+                        const tNodes = pNodes[i].getElementsByTagName('w:t');
+                        let pStr = '';
+                        for (let j = 0; j < tNodes.length; j++) {
+                            pStr += tNodes[j].textContent || '';
+                        }
+                        if (pStr.trim()) {
+                            lines.push(pStr.trim());
+                        }
+                    }
+                    return lines.join('\n\n');
+                }
+            }
+            offset = dataStart + (compressedSize || 1);
+        }
+        throw new Error('No se pudo extraer word/document.xml');
+    }
+
+    // =========================================================================
+    // 5. DETECCIÓN Y CARGA DE VOCES EN ESPAÑOL (PABLO, HELENA, SABINA, NATURAL)
+    // =========================================================================
+    function refreshVoices() {
+        if (!('speechSynthesis' in window)) return;
+        const list = window.speechSynthesis.getVoices() || [];
+        if (list.length === 0) return;
+
+        // Clasificar primero todas las voces en español y priorizar Natural / Online / Pablo
+        const esVoices = list.filter(v => v.lang && v.lang.toLowerCase().startsWith('es'));
+        const otherVoices = list.filter(v => !v.lang || !v.lang.toLowerCase().startsWith('es'));
+
+        esVoices.sort((a, b) => {
+            const rank = (v) => {
+                let r = 0;
+                const n = v.name.toLowerCase();
+                const l = v.lang.toLowerCase();
+                if (n.includes('natural') || n.includes('online')) r += 50;
+                if (n.includes('pablo') || n.includes('gonzalo') || n.includes('salome') || n.includes('sabina') || n.includes('helena') || n.includes('elena')) r += 30;
+                if (l.includes('es-co')) r += 25;
+                return r;
+            };
+            return rank(b) - rank(a);
+        });
+
+        availableVoices = [...esVoices, ...otherVoices];
+
+        if (!selectedVoiceURI && availableVoices.length > 0) {
+            const pabloOrFirst = availableVoices.find(v => v.name.toLowerCase().includes('pablo')) || availableVoices[0];
+            selectedVoiceURI = pabloOrFirst.voiceURI;
+        }
+        updateVoiceButtonText();
+        renderVoiceModalOptions();
+    }
+
+    function getShortVoiceLabel(voice) {
+        if (!voice) return 'Pablo (ES)';
+        const m = voice.name.match(/Microsoft\s+([A-Za-zÁÉÍÓÚáéíóúñÑ]+)/i);
+        if (m) {
+            const isNat = voice.name.toLowerCase().includes('natural');
+            return m[1] + (isNat ? ' HD' : '');
+        }
+        if (voice.name.toLowerCase().includes('google')) return 'Google ES';
+        return voice.name.split(' ')[0];
+    }
+
+    function updateVoiceButtonText() {
+        const btnLabel = document.getElementById('currentVoiceBtnLabel');
+        const v = availableVoices.find(x => x.voiceURI === selectedVoiceURI);
+        if (v) {
+            btnLabel.textContent = getShortVoiceLabel(v);
+            document.getElementById('engineStatusText').textContent = `Voz activa: ${v.name} (${v.lang})`;
+        } else {
+            btnLabel.textContent = 'Pablo';
+        }
+    }
+
+    function renderVoiceModalOptions() {
+        const container = document.getElementById('voicesListContainer');
+        container.innerHTML = '';
+
+        if (availableVoices.length === 0) {
+            container.innerHTML = `<div style="padding:12px; font-size:13px; color:var(--text-muted);">Usando voz predeterminada en español del sistema operativo.</div>`;
+            return;
+        }
+
+        availableVoices.forEach(v => {
+            const isSel = v.voiceURI === selectedVoiceURI;
+            const isNat = v.name.toLowerCase().includes('natural') || v.name.toLowerCase().includes('online');
+            const btn = document.createElement('button');
+            btn.className = 'voice-option' + (isSel ? ' selected' : '');
+            btn.innerHTML = `
+                <div>
+                    <div style="font-weight:700; font-size:14px;">
+                        ${v.name}
+                        ${isNat ? '<span class="badge">Natural HD</span>' : ''}
+                    </div>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Idioma: ${v.lang}</div>
+                </div>
+                <div style="font-size:12px; font-weight:700; color:var(--accent-yellow);">
+                    ${isSel ? '✓ Activa' : 'Elegir'}
+                </div>
+            `;
+            btn.onclick = () => {
+                selectedVoiceURI = v.voiceURI;
+                updateVoiceButtonText();
+                renderVoiceModalOptions();
+                document.getElementById('voiceModal').classList.remove('open');
+                if (isPlaying) {
+                    speakCurrentParagraph();
+                }
+            };
+            container.appendChild(btn);
+        });
+    }
+
+    // =========================================================================
+    // 6. MOTOR DE REPRODUCCIÓN POR ORACIONES (NUNCA SE CUELGA EN PÁRRAFOS LARGOS)
+    // =========================================================================
+    function splitIntoSafeChunks(text) {
+        // Divide párrafos largos en oraciones de máximo ~220 caracteres para que Chrome/Edge nunca congele speechSynthesis
+        const rawSentences = text.match(/[^.!;:\n]+[.!;:\n]*/g) || [text];
+        const chunks = [];
+        let current = '';
+
+        for (const s of rawSentences) {
+            if ((current + ' ' + s).trim().length > 220 && current.trim().length > 0) {
+                chunks.push(current.trim());
+                current = s;
+            } else {
+                current = (current + ' ' + s).trim();
+            }
+        }
+        if (current.trim().length > 0) {
+            chunks.push(current.trim());
+        }
+        return chunks.length > 0 ? chunks : [text];
+    }
+
+    function stopSpeechEngine() {
+        speechSessionId++;
+        isPlaying = false;
+        if (keepAliveInterval) {
+            clearInterval(keepAliveInterval);
+            keepAliveInterval = null;
+        }
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+        }
+        updatePlayPauseIcons();
+    }
+
+    function updatePlayPauseIcons() {
+        const iconPlay = document.getElementById('iconPlay');
+        const iconPause = document.getElementById('iconPause');
+        if (isPlaying) {
+            iconPlay.style.display = 'none';
+            iconPause.style.display = 'block';
+        } else {
+            iconPlay.style.display = 'block';
+            iconPause.style.display = 'none';
+        }
+    }
+
+    function speakCurrentParagraph() {
+        if (!('speechSynthesis' in window)) {
+            showToast('Tu navegador no tiene habilitado el motor de voz.');
+            return;
+        }
+        if (paragraphs.length === 0) return;
+
+        const mySession = ++speechSessionId;
+        window.speechSynthesis.cancel();
+        if (keepAliveInterval) clearInterval(keepAliveInterval);
+
+        isPlaying = true;
+        updatePlayPauseIcons();
+        highlightActiveParagraph(true);
+
+        const rawPara = paragraphs[currentParaIdx];
+        const normalizedText = expandLegalAbbreviations(rawPara);
+        const chunks = splitIntoSafeChunks(normalizedText);
+        let chunkIdx = 0;
+
+        // Watchdog para evitar que Chrome pause el TTS a los 14 segundos
+        keepAliveInterval = setInterval(() => {
+            if (isPlaying && window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+                window.speechSynthesis.pause();
+                window.speechSynthesis.resume();
+            }
+        }, 10000);
+
+        function speakNextChunk() {
+            if (mySession !== speechSessionId || !isPlaying) return;
+
+            if (chunkIdx >= chunks.length) {
+                // Terminó el párrafo actual, avanzar al siguiente
+                if (currentParaIdx < paragraphs.length - 1) {
+                    currentParaIdx++;
+                    speakCurrentParagraph();
+                } else {
+                    stopSpeechEngine();
+                    showToast('Lectura del documento completada.');
+                }
+                return;
+            }
+
+            const utter = new SpeechSynthesisUtterance(chunks[chunkIdx]);
+            const voiceObj = availableVoices.find(v => v.voiceURI === selectedVoiceURI);
+            if (voiceObj) {
+                utter.voice = voiceObj;
+                utter.lang = voiceObj.lang;
+            } else {
+                utter.lang = 'es-CO';
+            }
+            utter.rate = speeds[speedIdx];
+
+            utter.onend = () => {
+                if (mySession !== speechSessionId || !isPlaying) return;
+                chunkIdx++;
+                speakNextChunk();
+            };
+
+            utter.onerror = (ev) => {
+                if (ev.error === 'canceled' || ev.error === 'interrupted') return;
+                if (mySession !== speechSessionId || !isPlaying) return;
+                chunkIdx++;
+                speakNextChunk();
+            };
+
+            window.speechSynthesis.speak(utter);
+        }
+
+        // Pequeño respiro de 40ms tras cancel() para que Windows SAPI5 no ignore el nuevo audio
+        setTimeout(speakNextChunk, 40);
+    }
+
+    // =========================================================================
+    // 7. RENDERIZADO DE INTERFAZ Y SINCRONIZACIÓN CON HOJA OFICIAL WORD
+    // =========================================================================
+    function loadDocumentById(docId) {
+        stopSpeechEngine();
+        activeDocId = docId;
+        const doc = docs.find(d => d.id === docId);
+        if (!doc) return;
+
+        document.getElementById('docHeaderTitle').textContent = doc.title;
+        document.getElementById('docCountLabel').textContent = `${docs.length} archivos`;
+
+        paragraphs = doc.content
+            .split(/\r?\n+/)
+            .map(p => p.trim())
+            .filter(p => p.length > 0);
+
+        currentParaIdx = 0;
+
+        // Sincronizar con la Hoja Oficial Word
+        document.getElementById('wordEditableBody').textContent = doc.content;
+
+        renderSidebarCards();
+        renderReaderParagraphs();
+        renderSegmentsBar();
+        updateRemainingTimeStatus();
+    }
+
+    function renderSidebarCards() {
+        const listEl = document.getElementById('docListContainer');
+        listEl.innerHTML = '';
+
+        docs.forEach(d => {
+            const btn = document.createElement('button');
+            btn.className = 'doc-card' + (d.id === activeDocId ? ' active' : '');
+            btn.innerHTML = `
+                <div class="doc-card-title">${d.title}</div>
+                <div class="doc-card-sub">${d.subtitle || 'Escrito del despacho'}</div>
+            `;
+            btn.onclick = () => loadDocumentById(d.id);
+            listEl.appendChild(btn);
+        });
+    }
+
+    function renderReaderParagraphs() {
+        const container = document.getElementById('paragraphsContainer');
+        container.style.fontSize = `${readerFontSize}px`;
+        container.innerHTML = '';
+
+        paragraphs.forEach((text, i) => {
+            const p = document.createElement('div');
+            p.id = `r-para-${i}`;
+            const isHeading = i === 0 || (text === text.toUpperCase() && text.length < 135);
+            p.className = 'r-para' + (i === currentParaIdx ? ' active' : '') + (isHeading ? ' heading-para' : '');
+            p.textContent = text;
+            p.onclick = () => {
+                currentParaIdx = i;
+                speakCurrentParagraph();
+            };
+            container.appendChild(p);
+        });
+    }
+
+    function renderSegmentsBar() {
+        const track = document.getElementById('segmentsTrack');
+        track.innerHTML = '';
+
+        paragraphs.forEach((text, i) => {
+            const seg = document.createElement('div');
+            const clampedLen = Math.min(Math.max(text.length, 30), 420);
+            const widthPx = Math.max(9, Math.round((clampedLen / 420) * 42));
+            seg.style.width = `${widthPx}px`;
+
+            let cls = 'seg-pill';
+            if (i === currentParaIdx) cls += ' current';
+            else if (i < currentParaIdx) cls += ' past';
+            seg.className = cls;
+            seg.title = `Párrafo ${i + 1}: ${text.slice(0, 65)}...`;
+
+            seg.onclick = () => {
+                currentParaIdx = i;
+                if (isPlaying) {
+                    speakCurrentParagraph();
+                } else {
+                    highlightActiveParagraph(true);
+                }
+            };
+            track.appendChild(seg);
+        });
+    }
+
+    function highlightActiveParagraph(autoScroll) {
+        paragraphs.forEach((_, i) => {
+            const el = document.getElementById(`r-para-${i}`);
+            if (!el) return;
+            if (i === currentParaIdx) el.classList.add('active');
+            else el.classList.remove('active');
+        });
+
+        if (autoScroll) {
+            const activeEl = document.getElementById(`r-para-${currentParaIdx}`);
+            if (activeEl) {
+                activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+        renderSegmentsBar();
+        updateRemainingTimeStatus();
+    }
+
+    function updateRemainingTimeStatus() {
+        const total = paragraphs.length;
+        const curr = total ? currentParaIdx + 1 : 0;
+        const remainingWords = paragraphs.slice(currentParaIdx).join(' ').split(/\s+/).filter(Boolean).length;
+        const wpm = 155 * speeds[speedIdx];
+        const mins = Math.max(1, Math.ceil(remainingWords / wpm));
+        document.getElementById('paraStatusText').textContent =
+            `Párrafo ${curr} de ${total}, quedan unos ${mins} min`;
+    }
+
+    function showToast(message) {
+        const t = document.getElementById('toast');
+        t.textContent = message;
+        t.classList.add('show');
+        clearTimeout(window._toastTimeout);
+        window._toastTimeout = setTimeout(() => t.classList.remove('show'), 3200);
+    }
+
+    // =========================================================================
+    // 8. CONEXIÓN DE TODOS LOS BOTONES Y EVENTOS
+    // =========================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+        // Cargar voces inmediatamente y al cambiar
+        refreshVoices();
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = refreshVoices;
+        }
+
+        // Cargar el documento inicial (Memorial Mapfre de la primera captura)
+        loadDocumentById(docs[0].id);
+
+        // Pestañas Lector vs Hoja Oficial Word
+        const tabReaderBtn = document.getElementById('tabReaderBtn');
+        const tabOfficeBtn = document.getElementById('tabOfficeBtn');
+        const readerView = document.getElementById('readerView');
+        const officeView = document.getElementById('officeView');
+
+        tabReaderBtn.onclick = () => {
+            tabReaderBtn.classList.add('active');
+            tabOfficeBtn.classList.remove('active');
+            readerView.style.display = 'flex';
+            officeView.style.display = 'none';
+        };
+
+        tabOfficeBtn.onclick = () => {
+            tabOfficeBtn.classList.add('active');
+            tabReaderBtn.classList.remove('active');
+            readerView.style.display = 'none';
+            officeView.style.display = 'flex';
+        };
+
+        // Botón sincronizar desde la Hoja Word hacia el Lector
+        document.getElementById('btnSyncToReader').onclick = () => {
+            const updatedText = document.getElementById('wordEditableBody').innerText.trim();
+            if (!updatedText) return;
+            const currentDoc = docs.find(d => d.id === activeDocId);
+            if (currentDoc) {
+                currentDoc.content = updatedText;
+                loadDocumentById(currentDoc.id);
+                tabReaderBtn.click();
+                showToast('Texto actualizado en el Lector de Voz.');
+            }
+        };
+
+        // Botón copiar escrito para Word
+        document.getElementById('btnCopyFormatted').onclick = () => {
+            const textToCopy = document.getElementById('wordEditableBody').innerText;
+            const tempArea = document.createElement('textarea');
+            tempArea.value = textToCopy;
+            document.body.appendChild(tempArea);
+            tempArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempArea);
+            showToast('Escrito copiado al portapapeles listo para pegar en Word.');
+        };
+
+        // Play / Pausa
+        document.getElementById('btnPlayPause').onclick = () => {
+            if (isPlaying) {
+                stopSpeechEngine();
+            } else {
+                speakCurrentParagraph();
+            }
+        };
+
+        // Anterior / Siguiente párrafo
+        document.getElementById('btnPrevPara').onclick = () => {
+            if (currentParaIdx > 0) {
+                currentParaIdx--;
+                if (isPlaying) speakCurrentParagraph();
+                else highlightActiveParagraph(true);
+            }
+        };
+
+        document.getElementById('btnNextPara').onclick = () => {
+            if (currentParaIdx < paragraphs.length - 1) {
+                currentParaIdx++;
+                if (isPlaying) speakCurrentParagraph();
+                else highlightActiveParagraph(true);
+            }
+        };
+
+        // Botón Velocidad (1x, 1.15x, 1.25x, 1.5x, 1.75x, 2x)
+        document.getElementById('btnSpeedToggle').onclick = () => {
+            speedIdx = (speedIdx + 1) % speeds.length;
+            const sp = speeds[speedIdx];
+            document.getElementById('btnSpeedToggle').textContent = `${sp}x`;
+            updateRemainingTimeStatus();
+            if (isPlaying) speakCurrentParagraph();
+        };
+
+        // Mostrar / ocultar panel izquierdo
+        document.getElementById('btnToggleSidebar').onclick = () => {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+        };
+
+        // Tamaño de fuente
+        document.getElementById('btnFontPlus').onclick = () => {
+            readerFontSize = Math.min(40, readerFontSize + 2);
+            document.getElementById('paragraphsContainer').style.fontSize = `${readerFontSize}px`;
+            document.getElementById('fontSizeDisplay').textContent = `${readerFontSize}px`;
+        };
+
+        document.getElementById('btnFontMinus').onclick = () => {
+            readerFontSize = Math.max(16, readerFontSize - 2);
+            document.getElementById('paragraphsContainer').style.fontSize = `${readerFontSize}px`;
+            document.getElementById('fontSizeDisplay').textContent = `${readerFontSize}px`;
+        };
+
+        // Dicción Jurídica Colombiana
+        document.getElementById('btnToggleDiction').onclick = (e) => {
+            dictionActive = !dictionActive;
+            e.currentTarget.textContent = dictionActive ? 'ACTIVA' : 'INACTIVA';
+            showToast(dictionActive
+                ? 'Dicción jurídica activada (lee C.C., E. S. D., CPACA completos)'
+                : 'Dicción jurídica desactivada');
+            if (isPlaying) speakCurrentParagraph();
+        };
+
+        // Probar voz rápidamente
+        document.getElementById('btnTestVoice').onclick = () => {
+            stopSpeechEngine();
+            const testUtter = new SpeechSynthesisUtterance(
+                'Rondón Abogados. Lector forense de documentos configurado y listo en español.'
+            );
+            const v = availableVoices.find(x => x.voiceURI === selectedVoiceURI);
+            if (v) {
+                testUtter.voice = v;
+                testUtter.lang = v.lang;
+            } else {
+                testUtter.lang = 'es-CO';
+            }
+            window.speechSynthesis.speak(testUtter);
+            showToast('Reproduciendo prueba de audio...');
+        };
+
+        // Modal de Voces
+        document.getElementById('btnOpenVoices').onclick = () => {
+            refreshVoices();
+            document.getElementById('voiceModal').classList.add('open');
+        };
+        document.getElementById('btnCloseVoiceModal').onclick = () => {
+            document.getElementById('voiceModal').classList.remove('open');
+        };
+
+        // Modal de Pegar Texto
+        document.getElementById('btnOpenPaste').onclick = () => {
+            document.getElementById('pasteModal').classList.add('open');
+            document.getElementById('inputNewDocBody').focus();
+        };
+        document.getElementById('btnClosePasteModal').onclick = () => {
+            document.getElementById('pasteModal').classList.remove('open');
+        };
+
+        document.getElementById('btnSavePastedDoc').onclick = () => {
+            const title = document.getElementById('inputNewDocTitle').value.trim() || 'ESCRITO CARGADO MANUALMENTE';
+            const body = document.getElementById('inputNewDocBody').value.trim();
+            if (!body) {
+                showToast('Pega primero el texto del documento.');
+                return;
+            }
+            const newDoc = {
+                id: 'doc-' + Date.now(),
+                title: title.toUpperCase(),
+                subtitle: 'Cargado manualmente en el despacho',
+                content: body
+            };
+            docs.unshift(newDoc);
+            loadDocumentById(newDoc.id);
+            document.getElementById('inputNewDocTitle').value = '';
+            document.getElementById('inputNewDocBody').value = '';
+            document.getElementById('pasteModal').classList.remove('open');
+            showToast('Documento cargado y listo para escuchar.');
+        };
+
+        // Subir archivo .DOCX o .TXT con el descompresor nativo en JS puro
+        document.getElementById('fileUploadInput').onchange = async (ev) => {
+            const file = ev.target.files?.[0];
+            if (!file) return;
+            try {
+                let extracted = '';
+                if (file.name.toLowerCase().endsWith('.docx')) {
+                    const buf = await file.arrayBuffer();
+                    extracted = await extractTextFromDocxBuffer(buf);
+                } else {
+                    extracted = await file.text();
+                }
+
+                if (!extracted || !extracted.trim()) {
+                    showToast('No se pudo extraer texto del archivo.');
+                    return;
+                }
+
+                const newDoc = {
+                    id: 'doc-' + Date.now(),
+                    title: file.name.replace(/\.[^/.]+$/, '').toUpperCase(),
+                    subtitle: 'Archivo Word (.docx) importado',
+                    content: extracted
+                };
+                docs.unshift(newDoc);
+                loadDocumentById(newDoc.id);
+                showToast(`Archivo "${file.name}" cargado correctamente.`);
+            } catch (err) {
+                showToast('No se pudo descomprimir el archivo. Usa el botón "Pegar Texto".');
+            } finally {
+                ev.target.value = '';
+            }
+        };
+
+        // Atajos de teclado (Espacio = Play/Pausa, Flechas = Párrafo anterior/siguiente)
+        window.addEventListener('keydown', (e) => {
+            const activeTag = document.activeElement?.tagName?.toLowerCase();
+            const isEditable = document.activeElement?.isContentEditable;
+            if (activeTag === 'input' || activeTag === 'textarea' || isEditable) return;
+
+            if (e.code === 'Space') {
+                e.preventDefault();
+                document.getElementById('btnPlayPause').click();
+            } else if (e.code === 'ArrowRight') {
+                e.preventDefault();
+                document.getElementById('btnNextPara').click();
+            } else if (e.code === 'ArrowLeft') {
+                e.preventDefault();
+                document.getElementById('btnPrevPara').click();
+            }
+        });
+    });
+</script>
+</body>
+</html>
